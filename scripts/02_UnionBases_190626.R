@@ -57,7 +57,7 @@ base_personas <- base_x_persona %>%
 base_final <- base_personas %>%
   left_join(mod100, by = keys_hogar)
 
-# 5. Se inicia el análisis
+# 5. Se inicia el análisis---------------------------------------------------------------
 # Primero visualizamos cuál es la cantidad de participación en cada una de las 20 iniciativas sobre las que pregunta la ENAHO (P801_1 - P801_20)
 tabla_participacion <- base_final %>%
   select(starts_with("P801_")) %>%
@@ -117,3 +117,7 @@ base_final <- base_final %>%
 
 # Posteriormente se puede continuar con el cruce de la información de participación ciudadana con variables como salud, educación, acceso a agua, electricidad y desagüe
 
+# 6. Exportar la base de datos generada-------------------------------------------------
+library(arrow)
+write_parquet(base_final, "datos/procesados/base_final_190626.parquet")
+renv::snapshot(force = TRUE)
