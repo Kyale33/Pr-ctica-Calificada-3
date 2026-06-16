@@ -32,7 +32,7 @@ El análisis explora la relación entre la participación ciudadana (en las dive
 Existen 4 carpetas principales:
 1. **Datos:** En donde se encuentran todos los datos divididos en 2 subcarpetas: 
    * `datos/crudos`: Contiene los archivos originales directamente descargados de la base de datos de la ENAHO (Módulos 100, 300, 400 y 800) sin ninguna modificación.
-   * `datos/procesados`: Almacena la base de datos unificada final (`base_final`), ya limpia y con las variables combinadas lista para el análisis estadístico.
+   * `datos/procesados`: Almacena la base de datos unificada final (`base_final`), ya limpia y con las variables combinadas
 2. **Outputs**: En donde se guardan los productos gráficos del análisis
 3. **Docs:** La carpeta de documentación teórica y metodológica del proyecto
 4. **Scripts:** los archivos de R en los que se procesa la data
