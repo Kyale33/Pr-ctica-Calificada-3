@@ -7,6 +7,7 @@ Los módulos utilizados son los siguientes:
 - Módulo 300: Educación
 - Módulo 400: Salud
 - Módulo 800A y 800B: Participación Ciudadana
+
 La unidad de análisis del presente proyecto es el informante del hogar, quien mayoritariamente responde al módulo 800 pues las preguntas se realizan a personas mayores de 18 años.
 
 El análisis explora la relación entre la participación ciudadana (en las diversas iniciativas comunitarias) y las siguientes dimensiones:
