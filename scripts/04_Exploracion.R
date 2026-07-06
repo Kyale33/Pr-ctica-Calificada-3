@@ -403,3 +403,149 @@ plot_organizaciones <- ggplot(tabla_organizaciones, aes(x = reorder(Organizacion
 
 ggsave(paste0(ruta_graficos, "/6_4_Grafico_Organizaciones.png"), plot = plot_organizaciones, width = 8, height = 5, bg = "white")
 
+# ==============================================================================
+# 7. Exploración bivariada
+# ==============================================================================
+enaho_bivariado <- enaho_explorar %>%
+  mutate(
+    factor_07 = as.numeric(gsub(",", ".", factor_07)),
+    agua_grupo = case_match(as.character(agua_procedencia),
+                            "1" ~ "Red Pública (Vivienda)",
+                            c("2", "3") ~ "Red Pública (Fuera/Pilón)",
+                            c("4", "5", "6", "7", "8") ~ "No Red (Cisterna/Pozo/Río)",
+                            .default = "Otros"),
+    
+    edu_grupo = case_when(
+      edu_nivel_max %in% c("0", "1", "2", "3", "4") ~ "Bajo (Hasta Primaria)",
+      edu_nivel_max %in% c("5", "6")                ~ "Medio (Secundaria)",
+      edu_nivel_max %in% c("7", "8", "9", "10", "11") ~ "Alto (Superior)",
+      TRUE ~ "Sin especificar"
+    ),
+    
+    num_servicios = (electricidad == "1") + (agua_potable == "1") + (desague_tipo == "1"),
+    
+    num_organizaciones = (p801_1 == 1) + (p801_2 == 2) + (p801_3 == 3) + (p801_4 == 4) +
+      (p801_5 == 5) + (p801_6 == 6) + (p801_7 == 7) + (p801_8 == 8) + (p801_9 == 9) +
+      (p801_10 == 10) + (p801_11 == 11) + (p801_12 == 12) + (p801_13 == 13) +
+      (p801_14 == 14) + (p801_15 == 15) + (p801_16 == 16) + (p801_17 == 17) +
+      (p801_18 == 18) + (p801_20 == 20)
+    # p801_19 ("No participa") queda excluida a propósito
+  )
+
+enaho_diseno_biv <- enaho_bivariado %>%
+  mutate(factor_07 = as.numeric(gsub(",", ".", factor_07))) %>%
+  filter(!is.na(factor_07)) %>%  
+  as_survey_design(ids = conglome, strata = estrato, weights = factor_07, nest = TRUE)
+
+# —-------------------------------------------------------------------------------------------------------------
+# 7.1 Análisis Bivariado (2 categóricas) ---
+# Las variables utilizadas son
+# - Grupo/Nivel educativo
+# - Procedencia del agua
+
+# 7.1.1 Tabla de distribución de la población según grupo educativo y la procedencia del agua en su hogar
+tabla_biv1 <- enaho_diseno_biv %>%
+  group_by(edu_grupo, agua_grupo) %>%
+  summarise(Poblacion = survey_total(vartype = NULL)) %>%
+  group_by(edu_grupo) %>%
+  mutate(Porcentaje = (Poblacion / sum(Poblacion)) * 100,
+         Celda = paste0(comma(round(Poblacion, 0)), " (", round(Porcentaje, 1), "%)")) %>%
+  select(edu_grupo, agua_grupo, Celda) %>%
+  pivot_wider(names_from = agua_grupo, values_from = Celda)
+
+ft_biv1 <- flextable(tabla_biv1) %>%
+  add_header_lines(values = "Tabla Bivariada 1: Procedencia del agua según nivel educativo") %>% theme_vanilla() %>% autofit()
+save_as_image(ft_biv1, path = paste0(ruta_bivariado, "/Tabla_Bivariada_1.png"))
+
+# 7.1.2 Gráfico de distribución de la población según grupo educativo y la procedencia del agua en su hogar
+plot_biv1 <- ggplot(enaho_bivariado, aes(x = edu_grupo, fill = agua_grupo, weight = factor_07)) +
+  geom_bar(position = "fill") + scale_y_continuous(labels = percent) + scale_fill_brewer(palette = "Set2") +
+  labs(title = "Gráfico Bivariado 1: Educación y Abastecimiento de Agua", x = "Nivel Educativo", y = "Proporción", fill = "Agua") + theme_minimal()
+ggsave(paste0(ruta_bivariado, "/Grafico_Bivariado_1.png"), plot = plot_biv1, width = 8, height = 5, bg = "white")
+
+# —-------------------------------------------------------------------------------------------------------------
+# 7.2 Análisis Bivariado (1 categórica y 1 numérica) ---
+# Las variables utilizadas son
+# - Grupo/Nivel educativo
+# - Acceso a servicios del hogar (luz, agua y desagüe)
+
+# 7.2.1 Tabla de distribución de la población según grupo educativo y la cantidad de recursos básicos del hogar
+tabla_biv2 <- enaho_diseno_biv %>%
+  group_by(edu_grupo) %>%
+  summarise(
+    Promedio_Servicios = survey_mean(num_servicios, vartype = NULL)
+  ) %>%
+  ungroup() %>%
+  mutate(Promedio_Servicios = round(Promedio_Servicios, 2))
+
+ft_biv2 <- flextable(tabla_biv2) %>%
+  set_header_labels(edu_grupo = "Nivel Educativo", Promedio_Servicios = "Promedio de Servicios Básicos") %>%
+  add_header_lines(values = "Tabla Bivariada 2: Número promedio de servicios básicos según nivel educativo") %>%
+  theme_vanilla() %>%
+  autofit()
+save_as_image(ft_biv2, path = paste0(ruta_bivariado, "/Tabla_Bivariada_2.png"))
+
+# 7.2.2 Gráfico de distribución de la población según grupo educativo y la cantidad de recursos básicos del hogar
+plot_biv2 <- ggplot(tabla_biv2, aes(x = edu_grupo, y = Promedio_Servicios, fill = edu_grupo)) +
+  geom_col(width = 0.5, show.legend = FALSE) +
+  scale_fill_viridis_d(option = "mako", begin = 0.3, end = 0.8) +
+  labs(title = "Gráfico Bivariado 2: Promedio de servicios básicos por nivel educativo",
+       x = "Nivel Educativo", y = "Promedio de servicios") +
+  theme_minimal()
+ggsave(paste0(ruta_bivariado, "/Grafico_Bivariado_2.png"), plot = plot_biv2, width = 7, height = 5, bg = "white")
+
+# 7.2.3 Gráfico Boxplot de distribución de la población según grupo educativo y la cantidad de recursos básicos del hogar
+plot_biv2_box <- ggplot(enaho_bivariado, aes(x = edu_grupo, y = num_servicios, fill = edu_grupo)) +
+  geom_boxplot(show.legend = FALSE, outlier.alpha = 0.2) +
+  scale_fill_viridis_d(option = "mako", begin = 0.3, end = 0.8) +
+  labs(title = "Gráfico Bivariado 2: Distribución de servicios básicos por nivel educativo",
+       x = "Nivel Educativo", y = "N° de servicios básicos") +
+  theme_minimal()
+ggsave(paste0(ruta_bivariado, "/Grafico_Bivariado_2_Boxplot.png"), plot = plot_biv2_box, width = 7, height = 5, bg = "white")
+
+# —-------------------------------------------------------------------------------------------------------------
+# 7.3 Análisis Bivariado (2 numéricas) ---
+# Las variables utilizadas son
+# - N° de organizaciones a las que se pertenece
+# - Acceso a servicios del hogar (luz, agua y desagüe)
+
+# 7.2.1 Tabla de distribución de la población según n°de organizaciones en las que se participa y la cantidad de recursos básicos del hogar
+correlacion_ponderada <- cov.wt(enaho_bivariado[, c("num_servicios", "num_organizaciones")], wt = enaho_bivariado$factor_07, cor = TRUE)$cor
+
+tabla_correlacion <- as.data.frame(correlacion_ponderada) %>% 
+  rownames_to_column(var = "Variable") %>% 
+  mutate(across(where(is.numeric), ~ round(., 3)))
+
+ft_biv3 <- flextable(tabla_correlacion) %>% 
+  add_header_lines(values = "Tabla Bivariada 3: Matriz de correlación de Pearson entre servicios y organizaciones") %>% 
+  theme_vanilla() %>% 
+  autofit()
+save_as_image(ft_biv3, path = paste0(ruta_bivariado, "/Tabla_Bivariada_3.png"))
+
+# 7.2.2 Gráfico de distribución de la población según n°de organizaciones en las que se participa y la cantidad de recursos básicos del hogar
+plot_biv3 <- ggplot(enaho_bivariado, aes(x = num_servicios, y = num_organizaciones, weight = factor_07)) +
+  geom_jitter(alpha = 0.1, color = "#1F4E79", width = 0.2, height = 0.2) + 
+  geom_smooth(method = "lm", color = "red", se = FALSE) + 
+  labs(title = "Gráfico Bivariado 3: Tendencia entre Servicios del Hogar y Participación en Organizaciones", 
+       x = "Servicios Básicos (0-3)", y = "Organizaciones (0-19)") + 
+  theme_minimal()
+
+ggsave(paste0(ruta_bivariado, "/Grafico_Bivariado_3.png"), plot = plot_biv3, width = 8, height = 5, bg = "white")
+
+# 7.2.3 Gráfico de calor de distribución de la población según n°de organizaciones en las que se participa y la cantidad de recursos básicos del hogar
+tabla_heatmap <- enaho_diseno_biv %>%
+  group_by(num_servicios, num_organizaciones) %>%
+  summarise(Poblacion = survey_total(vartype = NULL)) %>%
+  ungroup()
+
+plot_biv3_heatmap <- ggplot(tabla_heatmap, aes(x = num_servicios, y = num_organizaciones, fill = Poblacion)) +
+  geom_tile() +
+  scale_fill_viridis_c(option = "mako", labels = comma) +
+  labs(title = "Gráfico Bivariado 3: Concentración de casos según servicios y organizaciones",
+       x = "Servicios Básicos (0-3)", y = "Organizaciones (0-19)", fill = "Población") +
+  theme_minimal()
+
+ggsave(paste0(ruta_bivariado, "/Grafico_Bivariado_3_Heatmap.png"), plot = plot_biv3_heatmap, width = 8, height = 6, bg = "white")
+
+write_parquet(enaho_lbl, "datos/procesados/enaho_explorada.parquet") 
+
