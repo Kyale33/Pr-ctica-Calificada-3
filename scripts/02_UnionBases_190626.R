@@ -172,6 +172,6 @@ base_final <- base_paso3 %>%
 # ==============================================================================
 # Se exporta la nueva base de datos creada
 
-write_parquet(base_final, "base_final_0726.parquet")
+write_parquet(base_final, "datos/procesados/base_final_0726.parquet")
 renv::snapshot(force = TRUE)
 
