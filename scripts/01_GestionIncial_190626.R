@@ -1,12 +1,12 @@
 #===========================================================================
-# Proyecto: Análisis de la participación ciudadana según el acceso a servicios básicos
+# Proyecto: Análisis de la participación ciudadana según el acceso a servicios básicos con los datos de la ENAHO
 # Autor: Kyara Ronchi
 # Fecha: 19-06
 # Objetivo del script: Creación de carpetas y enlace con GitHub
 #===========================================================================
 
 # 1. Creamos el R Project---------------------------------------------------
-Se creó el R Project llamado "Análisis participación ciudadana" y se generó este primer script titulado "Gestión inicial"
+# Se creó el R Project llamado "Análisis participación ciudadana" y se generó este primer script titulado "Gestión inicial"
 
 # 2. Creamos las carpetas---------------------------------------------------
 dir.create("datos")
