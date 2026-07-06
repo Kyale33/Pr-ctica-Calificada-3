@@ -1,0 +1,100 @@
+---
+title: "05_Informe_Exploracion_Inicial"
+author: "Kyara Ronchi"
+date: "2026-07-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+# Configuración global de los chunks para todo el documento
+knitr::opts_chunk$set(
+  echo = FALSE, 
+  warning = FALSE, 
+  message = FALSE, 
+  fig.align = 'center', 
+  out.width = '85%'
+)
+```
+
+# **Introducción** 
+En el presente documento se realiza un análisis exploratorio de datos (EDA) de las variables seleccionadas para el proyecto "Análisis de la Participación Ciudadana usando datos de la ENAHO". En concreto, el presente informe detalla la participación ciudadana en base al acceso a recursos y servicios básicos para el hogar y las personas. De manera más específica, se utilizan las siguientes variables:
+
+---
+
+## I. Análisis Univariado: La tenencia de servicios básicos en el hogar
+
+### 1. Población con acceso a servicio de agua y agua potable
+
+```{r, fig.cap="Tabla 1: Distribución de la población según el tipo de procedencia del agua"}
+knitr::include_graphics(here::here("outputs", "tablas", "5_1_1_Tabla_Agua.png"))
+```
+
+La **Tabla 5.1.1** muestra que el acceso al agua en el Perú está altamente concentrado en la red pública formal. La categoría "Red pública, dentro de la vivienda" (82.91%) domina ampliamente la distribución, evidenciando que la gran mayoría de la población cuenta con una conexión domiciliaria directa al sistema de abastecimiento. Sin embargo, al sumar las categorías que reflejan formas de acceso precario o indirecto —camión-cisterna (4.18%), pilón o pileta pública (2.13%), pozo (1.98%), manantial o puquio (1.76%) y río, acequia o laguna (1.41%)— se obtiene un 11.46% de la población que depende de fuentes no conectadas a la red domiciliaria, lo que revela una brecha persistente de infraestructura hídrica que afecta principalmente a zonas rurales y periurbanas.
+
+```{r, fig.cap="Tabla 2: Distribución de la población según el tipo de desague del hogar"}
+knitr::include_graphics(here::here("outputs", "tablas", "5_1_2_Tabla_Desague.png"))
+```
+
+La **Tabla 5.1.2** muestra que la cobertura de saneamiento formal es considerablemente menor que la de agua potable, evidenciando una brecha estructural entre ambos servicios. La "Red pública de desagüe dentro de la vivienda" (67.91%) concentra a la mayoría de la población, pero deja fuera a casi un tercio que recurre a soluciones no conectadas al sistema formal. Al sumar las categorías que representan sistemas alternativos o deficientes —pozo séptico o biodigestor (7.44%), pozo ciego o negro (6.94%), campo abierto o al aire libre (2.47%), letrina con tratamiento (2.27%) y río, acequia o canal (1.29%)— se obtiene un 20.41% de la población que depende de mecanismos de eliminación de excretas fuera de la red pública, cifra casi el doble de la observada en el caso del agua (11.46%).
+
+```{r, fig.cap="Tabla 3:  Distribución de la población según el tipo de alumbrado del hogar"}
+knitr::include_graphics(here::here("outputs", "tablas", "5_1_3_Tabla_Alumbrado.png"))
+```
+
+La **Tabla 5.1.3** muestra que la cobertura eléctrica en el Perú es prácticamente universal. La categoría "Electricidad" (96.42%) concentra a la casi totalidad de la población, mientras que las fuentes no eléctricas o precarias —vela (0.97%), no cuenta con alumbrado (0.41%) y petróleo/gas o lámpara (0.12%)— suman apenas 1.5% de la población en situación de exclusión energética directa. La categoría "Otro" (2.03%), es la segunda más relevante, lo que sugiere la presencia de soluciones de electrificación descentralizada en zonas no cubiertas por la red convencional.
+
+---
+
+### 2. Acceso al servicio de educación
+
+```{r, fig.cap="Tabla 4: Distribución de la población según el nivel educativo máximo alcanzado"}
+knitr::include_graphics(here::here("outputs", "tablas", "5_2_Tabla_Educacion.png"))
+```
+
+La **Tabla 5.2** muestra que la secundaria completa (27.3%) es el nivel educativo predominante en la población, seguida de la primaria incompleta (15.75%) y la secundaria incompleta (12.76%). Al sumar los niveles de primaria (completa e incompleta) y secundaria (completa e incompleta), se obtiene que más de la mitad de la población (68.29%) no supera la educación básica regular. La educación superior universitaria completa alcanza solo 7.56%, mientras que los estudios de posgrado (Maestría/Doctorado) son marginales (1.31%). Asimismo, un 6.02% de la población no cuenta con ningún nivel educativo, lo que refleja aún brechas importantes de acceso al sistema educativo.
+
+### 3. Acceso al servicio de salud y seguro médico
+
+```{r, fig.cap="Tabla 5: Tabla de afiliación a los seguros de salud"}
+knitr::include_graphics(here::here("outputs", "tablas", "5_3_Tabla_Salud.png"))
+```
+
+La **Tabla 5.3** muestra que el Seguro Integral de Salud (SIS) es el principal mecanismo de afiliación a salud, cubriendo al 65.15% de la población, seguido de EsSalud (25.71%). Al ser una tabla de respuestas múltiples, un mismo individuo puede figurar en más de una categoría, por lo que la suma de porcentajes (93.23%) no representa cobertura total ni exclusiva. Los seguros privados, de fuerzas armadas/policiales y universitario son marginales en conjunto (2.37%), lo que evidencia que el aseguramiento en salud depende mayoritariamente de esquemas públicos, en particular del subsidiado (SIS) por sobre el contributivo (EsSalud).
+
+### 4. Participación ciudadana
+
+```{r, fig.cap="Tabla 6: Tabla de participación ciudadana en organizaciones de la sociedad civil"}
+knitr::include_graphics(here::here("outputs", "tablas", "5_4_Tabla_Organizaciones.png"))
+```
+
+La **Tabla 5.4** muestra que la mayoría de la población peruana (64.46%) no participa en ninguna organización social, lo que evidencia un bajo nivel de asociatividad y capital social organizado. Entre quienes sí participan, predominan las organizaciones de base territorial y comunitaria: Comunidad Campesina (11.52%) y Junta Vecinal (7.31%) concentran la mayor participación, seguidas de organizaciones vinculadas a programas sociales de asistencia alimentaria como Vaso de Leche (4.87%) y Desayuno/Almuerzo Escolar (3.45%). En contraste, las organizaciones de representación política o gremial formal —Partido Político (0.48%) y Sindicato/Trabajadores (1.24%)— tienen una presencia marginal, lo que sugiere que la participación ciudadana se canaliza principalmente a través de espacios comunitarios y asistenciales antes que por vías políticas o laborales tradicionales
+
+---
+
+## II. Análisis Bivariado: Relación entre diversos servicios
+
+### Acceso a agua y nivel educativo
+
+```{r, fig.cap="Tabla 10: Procedencia del agua según nivel educativo"}
+knitr::include_graphics(here::here("outputs", "gráficos_biv", "Tabla_Bivariada_1.png"))
+```
+
+La **Tabla Bivariada 1** muestra que existe una relación positiva entre nivel educativo y acceso a agua por red pública dentro de la vivienda. El grupo con educación superior (Alto) presenta la mayor cobertura de red dentro de la vivienda (87.9%) y la menor proporción sin conexión a red (6.6%), mientras que los grupos con educación básica (Bajo y Medio) muestran niveles similares entre sí, alrededor de 81%, con una proporción notablemente mayor sin acceso a red (14.6% y 12.8%, respectivamente). Esto sugiere que el salto más importante en acceso al agua se da al alcanzar educación superior
+
+### Acceso a servicios y nivel educativo
+
+```{r, fig.cap="Tabla 11: Tipo de contrato laboral según sexo"}
+knitr::include_graphics(here::here("outputs", "gráficos_biv", "Tabla_Bivariada_2.png"))
+```
+
+La **Tabla Bivariada 2** confirma la relación positiva entre nivel educativo y acceso a servicios básicos, mostrando un patrón gradual y consistente: a mayor nivel educativo, mayor es el promedio de servicios básicos disponibles. El grupo con educación superior (Alto) presenta el promedio más alto (2.72), seguido del grupo con secundaria (Medio, 2.51), mientras que el grupo con primaria o menos (Bajo) registra el promedio más bajo (2.18).
+
+---
+
+### La formalidad, el ingreso y la desconfianza en las instituciones
+
+```{r, fig.cap="Tabla de Correlación"}
+knitr::include_graphics(here::here("outputs", "gráficos_biv", "Tabla_Bivariada_3.png"))
+```
+
+La **Tabla Bivariada 3** muestra una correlación negativa y de magnitud moderada (r = -0.35) entre el número de servicios básicos que posee un hogar y el número de organizaciones sociales en las que participa. Esto sugiere que, a mayor acceso a servicios básicos, tiende a haber una menor participación organizacional, y viceversa. 
