@@ -137,4 +137,5 @@ enaho_limpia_sin_nas <- enaho_seleccion %>%
 # 6. Exportación de la base de datos acondicionada
 # ==============================================================================
 
-write_parquet(enaho_limpia_sin_nas, "enaho_acondicionada.parquet") 
+write_parquet(enaho_limpia_sin_nas, "datos/procesados/enaho_acondicionada.parquet") 
+
