@@ -123,3 +123,65 @@ p1 <- ggplot(data_grafico1, aes(x = indice_servicios_dignos_lbl, y = porcentaje,
   ylim(0, max(data_grafico1$porcentaje) + 10)
 
 ggsave("outputs/gráficos_clasificados/grafico_barras_participacion.png", plot = p1, width = 9, height = 6, dpi = 300)
+
+
+# ==============================================================================
+# 6. Prueba de Correlación ---------------------------------------------------------------------------------------
+# ==============================================================================
+rho_ponderado <- weightedCorr(
+  x = enaho_con_indice$indice_servicios_dignos,
+  y = enaho_con_indice$indice_participacion,
+  weights = enaho_con_indice$factor_07,
+  method = "Spearman"
+)
+
+rho_ponderado <- round(rho_ponderado, 4)
+print(rho_ponderado)
+
+# Convertimos el diseño srvyr a un diseño con réplicas bootstrap
+diseno_rep <- as.svrepdesign(enaho_diseno_recursos, type = "bootstrap", replicates = 200)
+
+# Función que calcula el rho de Spearman ponderado en cada réplica
+calc_rho <- function(w, data) {
+  weightedCorr(data$indice_servicios_dignos, data$indice_participacion,
+               weights = w, method = "Spearman")
+}
+
+resultado_boot <- withReplicates(diseno_rep, calc_rho)
+print(resultado_boot)
+theta   <- coef(resultado_boot)[1]
+se      <- SE(resultado_boot)[1]
+z       <- theta / se
+p_valor <- 2 * pnorm(-abs(z))
+
+cat("Rho de Spearman ponderado:", round(theta, 4), "\n")
+cat("Error estándar:", round(se, 4), "\n")
+cat("Estadístico z:", round(z, 4), "\n")
+cat("p-valor:", format.pval(p_valor, digits = 4), "\n")
+cat("\n========================================================\n")
+cat(" RESULTADOS DE LA PRUEBA DE CORRELACIÓN PONDERADA (Spearman)\n")
+cat("========================================================\n")
+cat("Coeficiente de correlación (Rho de Spearman, ponderado):", round(theta, 4), "\n")
+cat("Significancia estadística (p-value):", format.pval(p_valor, digits = 4), "\n")
+cat("--------------------------------------------------------\n")
+
+if (p_valor < 0.05) {
+  cat("INTERPRETACIÓN: La relación es ESTADÍSTICAMENTE SIGNIFICATIVA (p < 0.05).\n")
+  if (theta < 0) {
+    cat("Dirección: INVERSA/NEGATIVA. A mayor acceso a servicios y recursos dignos,\n")
+    cat("  disminuye de forma sistemática la participación ciudadana en el Perú.\n")
+  } else {
+    cat("Dirección: DIRECTA/POSITIVA. A mayor acceso, mayor participación.\n")
+  }
+} else {
+  cat("INTERPRETACIÓN: NO hay evidencia estadística de correlación.\n")
+}
+cat("========================================================\n")
+
+# Intervalo de confianza del modelo
+ic_inferior <- theta - 1.96 * se
+ic_superior <- theta + 1.96 * se
+
+cat("Rho de Spearman ponderado:", round(theta, 4), "\n")
+cat("IC 95%: [", round(ic_inferior, 4), ",", round(ic_superior, 4), "]\n")
+
