@@ -5,7 +5,17 @@
 # Objetivo del script: Cargar los módulos y hacer los joins
 #===========================================================================
 
-# 1. Carga de librerías------------------------------------------------------
+#===========================================================================
+# Proyecto: Análisis de la participación ciudadana según el acceso a servicios básicos con datos de la ENAHO
+# Autor: Kyara Ronchi
+# Fecha: 14-06
+# Objetivo del script: Cargar los módulos y hacer los joins
+#===========================================================================
+
+# ==============================================================================
+# 1. Carga de librerías  —------------------------------------------------------------------------------------
+# ==============================================================================
+
 library(rio)
 library(tidyverse)
 library(janitor)
@@ -14,110 +24,154 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(stringr)
-
-# 2. Se usa renv-------------------------------------------------------------
-# Se utiliza renv::init() para guardar la versión actual de las librerías utilizadas
-renv::snapshot(force = TRUE)
-
-# 3. Importar datos------------------------------------------------------
-# Se cargan los módulos de vivienda, educación, salud y participación ciudadana para el análisis
-# - Módulo 100: Vivienda
-# - Módulo 300: Educación
-# - Módulo 400: Salud
-# - Módulo 800: Participación Ciudadana
-
-mod100  = import("Enaho01-2025-100.csv", encoding = "Latin-1")
-mod300  = import("Enaho01A-2025-300.csv", encoding = "Latin-1")
-mod400  = import("Enaho01A-2025-400.csv", encoding = "Latin-1")
-mod_pc1 = import("Enaho01-2025-800A.csv", encoding = "Latin-1")
-mod_pc2 = import("Enaho01-2025-800B.csv", encoding = "Latin-1")
-
-# 4. Unión de datos-------------------------------------------------------
-# El key de hogar se estructura para darle un identificador al hogar encuestado
-keys_hogar <- c("AÑO", "MES", "CONGLOME", "VIVIENDA", "HOGAR")
-# El key de persona se estructura para darle un identificador a la persona encuestada
-keys_personas <- c(keys_hogar, "CODPERSO")
-
-# Unimos los módulos 300 (educación) y 400 (salud) por las variables comunes de keys_personas, ya que las preguntas de ambos módulos son para todas las personas y no para una sola por hogar
-base_x_persona <- mod400 %>%
-  left_join(mod300, by = keys_personas)
-
-# Unimos el módulo 800 (participación ciudadana) adaptando la key que falta con otras variables que hay en común, ya que no necesariamente todos los que respondieron el módulo 300 y 400 también respondieron el 800 (Que suele ser sólo para el informante del hogar)
-base_personas <- base_x_persona %>%
-  left_join(mod_pc1, by = c(
-    "AÑO" = "AÑO", 
-    "MES" = "MES", 
-    "CONGLOME" = "CONGLOME", 
-    "VIVIENDA" = "VIVIENDA", 
-    "HOGAR" = "HOGAR", 
-    "CODPERSO" = "CODINFOR"
-  ))
-
-# Unimos las bases de datos para que podamos tener como unidad de análisis al informante del hogar
-base_final <- base_personas %>%
-  left_join(mod100, by = keys_hogar)
-
-# 5. Se inicia el análisis---------------------------------------------------------------
-# Primero visualizamos cuál es la cantidad de participación en cada una de las 20 iniciativas sobre las que pregunta la ENAHO (P801_1 - P801_20)
-tabla_participacion <- base_final %>%
-  select(starts_with("P801_")) %>%
-  pivot_longer(cols = everything(), names_to = "Iniciativa", values_to = "Respuesta") %>%
-  mutate(Respuesta = trimws(as.character(Respuesta))) %>%
-  filter(Respuesta != "0" & !is.na(Respuesta) & Respuesta != "NA") %>%
-  count(Iniciativa) %>%
-  arrange(desc(n))
-print(tabla_participacion)
-
-# Cambiamos los nombres de las variables a cada iniciativa
-nombres_iniciativas <- c(
-  "P801_1" = "Clubes Deportivos", "P801_2" = "Partido Político", 
-  "P801_3" = "Clubes Culturales", "P801_4" = "Junta Vecinal",
-  "P801_5" = "Ronda Campesina", "P801_6" = "Asoc. Regantes", 
-  "P801_7" = "Asoc. Profesional", "P801_8" = "Sindicato / Trabajadores",
-  "P801_9" = "Club de Madres", "P801_10" = "APAFA", 
-  "P801_11" = "Vaso de Leche", "P801_12" = "Comedor Popular",
-  "P801_13" = "CLAS (Salud)", "P801_14" = "Presupuesto Participativo",
-  "P801_15" = "CCLD (Municipio)", "P801_16" = "Comunidad Campesina",
-  "P801_17" = "Asoc. Agropecuaria", "P801_18" = "Otros",
-  "P801_19" = "No participa", "P801_20" = "Desayuno/Almuerzo Escolar"
-)
-
-# Graficamos
-tabla_participacion %>%
-  mutate(Iniciativa_Nombre = nombres_iniciativas[Iniciativa]) %>%
-  filter(!is.na(Iniciativa_Nombre)) %>% 
-  ggplot(aes(x = reorder(Iniciativa_Nombre, n), y = n)) +
-  geom_col(fill = "steelblue") +
-  coord_flip() +  
-  theme_minimal() +
-  labs(
-    title = "Participación de los Ciudadanos según Iniciativa Organizacional",
-    subtitle = "Módulo de Gobernabilidad - ENAHO",
-    x = "Iniciativa Ciudadana",
-    y = "Cantidad de Participantes (N)"
-  )
-
-# Creamos 2 columnas:
-# - Índice de participación: sumatoria de la cantidad de iniciativas ciudadanas en las que el informante participa
-# - Variable dummy sobre si hay participación ciudadana o no
-base_final <- base_final %>%
-  mutate(
-    indice_participacion = (!P801_1  %in% c("0", NA)) + (!P801_2  %in% c("0", NA)) + 
-      (!P801_3  %in% c("0", NA)) + (!P801_4  %in% c("0", NA)) + 
-      (!P801_5  %in% c("0", NA)) + (!P801_6  %in% c("0", NA)) + 
-      (!P801_7  %in% c("0", NA)) + (!P801_8  %in% c("0", NA)) + 
-      (!P801_9  %in% c("0", NA)) + (!P801_10 %in% c("0", NA)) + 
-      (!P801_11 %in% c("0", NA)) + (!P801_12 %in% c("0", NA)) + 
-      (!P801_13 %in% c("0", NA)) + (!P801_14 %in% c("0", NA)) + 
-      (!P801_15 %in% c("0", NA)) + (!P801_16 %in% c("0", NA)) + 
-      (!P801_17 %in% c("0", NA)) + (!P801_18 %in% c("0", NA)) + 
-      (!P801_20 %in% c("0", NA)),
-    participacion_ciudadana = ifelse(indice_participacion > 0, "Sí", "No")
-  )
-
-# Posteriormente se puede continuar con el cruce de la información de participación ciudadana con variables como salud, educación, acceso a agua, electricidad y desagüe
-
-# 6. Exportar la base de datos generada-------------------------------------------------
 library(arrow)
-write_parquet(base_final, "datos/procesados/base_final_190626.parquet")
+
+# ==============================================================================
+# 2. Utilizamos renv —---------------------------------------------------------------------------------------
+# ==============================================================================
+# Se utiliza renv::init() en la consola para guardar la versión actual de las librerías utilizadas
+
 renv::snapshot(force = TRUE)
+
+# ==============================================================================
+# 3. Importar datos —---------------------------------------------------------------------------------------
+# ==============================================================================
+# Se cargan los módulos de vivienda, educación, salud y participación ciudadana para el análisis
+
+# ----------------------------------------------------------------------------------------------------------------
+# - Módulo 100: Vivienda
+mod100  <- import("datos/crudos/Enaho01-2025-100.csv", encoding = "Latin-1") %>% clean_names()
+
+# ----------------------------------------------------------------------------------------------------------------
+# - Módulo 300: Educación
+mod300  <- import("datos/crudos/Enaho01A-2025-300.csv", encoding = "Latin-1") %>% clean_names()
+
+# ----------------------------------------------------------------------------------------------------------------
+# - Módulo 400: Salud
+mod400    <- import("datos/crudos/Enaho01A-2025-400.csv", encoding = "Latin-1") %>% clean_names()
+
+# ----------------------------------------------------------------------------------------------------------------
+# - Módulo 800: Participación Ciudadana
+mod_pc1 <- import("datos/crudos/Enaho01-2025-800A.csv", encoding = "Latin-1") %>% clean_names()
+
+# ==============================================================================
+# 4. Creación de id —----------------------------------------------------------------------------------------
+# ==============================================================================
+# Construímos un id común en las bases de datos para que no ocurran solapamientos ni sobreescrituras
+
+# ----------------------------------------------------------------------------------------------------------------
+# Para el id de persona se utilizan las siguientes variables: 
+
+# - CONGLOME
+# - CODPERSO
+
+mod400$id_persona <- paste(str_trim(as.character(mod400$conglome)), 
+                           str_trim(as.character(mod400$codperso)), sep = "_")
+
+mod300$id_persona <- paste(str_trim(as.character(mod300$conglome)), 
+                           str_trim(as.character(mod300$codperso)), sep = "_")
+
+if ("codinfor" %in% colnames(mod_pc1)) {
+  mod_pc1$id_persona <- paste(str_trim(as.character(mod_pc1$conglome)), 
+                              str_trim(as.character(mod_pc1$codinfor)), sep = "_")
+} else {
+  mod_pc1$id_persona <- paste(str_trim(as.character(mod_pc1$conglome)), 
+                              str_trim(as.character(mod_pc1$codperso)), sep = "_")
+}
+# ----------------------------------------------------------------------------------------------------------------
+# Para el id de hogar se utilizan las siguientes variables: 
+
+# - CONGLOME
+# - VIVIENDA
+# - HOGAR
+
+mod400$id_hogar <- paste(str_trim(as.character(mod400$conglome)), 
+                         str_trim(as.character(mod400$vivienda)), 
+                         str_trim(as.character(mod400$hogar)), sep = "_")
+
+mod100$id_hogar <- paste(str_trim(as.character(mod100$conglome)), 
+                         str_trim(as.character(mod100$vivienda)), 
+                         str_trim(as.character(mod100$hogar)), sep = "_")
+
+# ==============================================================================
+# 5. Extracción de las variables relevantes —------------------------------------------------------------
+# ==============================================================================
+# Extraemos las variables relevantes de cada base de datos a utilizar para evitar que se sobreescriban
+# Esta decisión fue tomada frente al borrado de una de las variables al momentos de unir previamente las bases de datos, por lo que se tuvo que optar por seleccionar variables específicas y unificarlas
+
+# ----------------------------------------------------------------------------------------------------------------
+# Módulo 100: Vivienda y Servicios Básicos
+
+vivienda_extracto <- data.frame(
+  id_hogar        = mod100$id_hogar, # El id de hogar que generamos
+  estrato            = mod100$estrato, 
+  agua_procedencia   = mod100$p110, # ¿De qué fuente procede principalmente el agua de su hogar?
+  agua_potable       = mod100$p110a1, # ¿El agua es potable?
+  agua_acceso        = mod100$p110c, # ¿El hogar tiene acceso al servicio de agua todos los días de la semana?
+  desague_tipo       = mod100$p111a, # ¿El baño o servicio higiénico que tiene su hogar esta conectado a…?
+  electricidad       = mod100$p1121, # Tipo de alumbrado del hogar: Electricidad
+  lampara            = mod100$p1123, # Tipo de alumbrado del hogar: Petróleo/Gas (lámpara)
+  vela               = mod100$p1124, # Tipo de alumbrado del hogar: Vela
+  generador          = mod100$p1125, # Tipo de alumbrado del hogar: Generador
+  alumbrado          = mod100$p1126, # Tipo de alumbrado del hogar: Otro
+  sin_alumbrado      = mod100$p1127 # No utiliza alumbrado en el hogar
+) %>% distinct(id_hogar, .keep_all = TRUE)
+
+# —-------------------------------------------------------------------------------------------------------------
+# Módulo 300: Educación 
+
+edu_extracto <- data.frame(
+  id_persona       = mod300$id_persona, # El id de persona que generamos
+  edu_nivel_max      = mod300$p301a, # ¿Cuál es el último año o grado de estudios y nivel que aprobó? 
+  edu_año_max        = mod300$p301b, # ¿Cuál es el último año o grado de estudios y nivel que aprobó? - Año
+  edu_grado_max      = mod300$p301c # ¿Cuál es el último año o grado de estudios y nivel que aprobó? - Grado
+) %>% distinct(id_persona, .keep_all = TRUE)
+
+# —-------------------------------------------------------------------------------------------------------------
+# Módulo 400: Salud 
+
+salud_extracto <- mod400 %>% 
+  select(
+    id_persona, # El id de persona que generamos
+    seguro_essalud       = p4191, # Afiliado al seguro: Essalud
+    seguro_sis           = p4195, # Afiliado al seguro: SIS
+    seguro_ffa_pnp       = p4194, # Afiliado al seguro: FFAA/PNP
+    seguro_privado       = p4192, # Afiliado al seguro: Privado
+    seguro_entidad       = p4193, # Afiliado al seguro: Entidad
+    seguro_universitario = p4196, # Afiliado al seguro: Universitario
+    seguro_escolar       = p4197, # Afiliado al seguro: Escolar
+    seguro_otro          = p4198, # Afiliado al seguro: Otro
+    factor_07 = factor07
+  ) %>%  distinct(id_persona, .keep_all = TRUE)
+
+# ==============================================================================
+# 5. Unión de los módulos  —-------------------------------------------------------------------------------
+# ==============================================================================
+# Generamos una base de datos provisional con la información básica de nuestra unidad de análisis
+
+# —-------------------------------------------------------------------------------------------------------------
+# Unimos paso a paso las módulos
+
+base_personas <- mod400 %>% 
+  select(ano, mes, conglome, vivienda, hogar, codperso, id_persona, id_hogar)
+
+base_paso1 <- base_personas %>% 
+  left_join(edu_extracto, by = "id_persona")
+
+base_paso2 <- base_paso1 %>% 
+  left_join(salud_extracto, by = "id_persona")
+
+base_paso3 <- base_paso2 %>% 
+  left_join(distinct(mod_pc1, id_persona, .keep_all = TRUE), by = "id_persona")
+
+base_final <- base_paso3 %>% 
+  left_join(vivienda_extracto, by = "id_hogar")
+
+# ==============================================================================
+# 6. Exportar la base de datos generada —--------------------------------------------------------------
+# ==============================================================================
+# Se exporta la nueva base de datos creada
+
+write_parquet(base_final, "base_final_0726.parquet")
+renv::snapshot(force = TRUE)
+
