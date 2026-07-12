@@ -281,3 +281,4 @@ ic_superior <- theta + 1.96 * se
 cat("Rho de Spearman ponderado:", round(theta, 4), "\n")
 cat("IC 95%: [", round(ic_inferior, 4), ",", round(ic_superior, 4), "]\n")
 
+write_parquet(enaho_con_indice, "datos/procesados/enaho_final.parquet") 
