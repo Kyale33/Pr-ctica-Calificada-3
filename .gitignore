@@ -7,6 +7,5 @@
 
 
 datos/crudos/
-*.csv
-!outputs/**/*.csv
+*.csv !outputs/**/*.csv
 *.sav
