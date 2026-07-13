@@ -87,8 +87,8 @@ reporte_nas <- enaho_seleccion %>%
   arrange(desc(porcentaje_na))
 
 # Guardar el reporte de datos
+rio::export(reporte_nas, "outputs/tratamiento_nas/Reporte_Datos_Perdidos.xlsx")
 write_csv(reporte_nas, "outputs/tratamiento_nas/datos_perdidos_Reporte_Datos_Perdidos.csv")
-
 
 # ==============================================================================
 # 5. Tratamiento y limpieza de NAs —--------------------------------------------------------------------
