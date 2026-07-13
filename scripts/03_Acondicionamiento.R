@@ -86,6 +86,7 @@ reporte_nas <- enaho_seleccion %>%
   pivot_longer(everything(), names_to = "variable", values_to = "porcentaje_na") %>%
   arrange(desc(porcentaje_na))
 
+# Guardar el reporte de datos
 write_csv(reporte_nas, "outputs/tratamiento_nas/datos_perdidos_Reporte_Datos_Perdidos.csv")
 
 

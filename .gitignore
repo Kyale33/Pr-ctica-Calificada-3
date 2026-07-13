@@ -9,3 +9,4 @@
 datos/crudos/
 *.csv
 *.sav
+!outputs/**/*.csv
