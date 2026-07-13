@@ -8,5 +8,5 @@
 
 datos/crudos/
 *.csv
-*.sav
 !outputs/**/*.csv
+*.sav
