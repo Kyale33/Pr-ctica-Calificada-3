@@ -45,7 +45,7 @@ enaho_codebook <- enaho_final %>%
 write_parquet(enaho_codebook, here("datos", "procesados", "enaho_participacion_codebook.parquet"))
 
 # ==============================================================================
-# 2. Inyectamos todos los metadatos -------------------------------------------------
+# 2. Inyectamos todos los metadatos --------------------------------------------------
 # ==============================================================================
 # Un codebook requiere la etiqueta descriptiva y la fuente original de cada variable.
 # Usamos var_label() para darles un nombre humano y coherente.
